@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Stuff List Maker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        #newItem {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        #addItem {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        #addItem:hover {
+            background-color: #2980b9;
+        }
+        #itemList {
+            list-style-type: none;
+            padding: 0;
+        }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        .item-text {
+            flex: 1;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #clearAll {
+            background-color: #95a5a6;
+            color: white;
+        }
+        #clearAll:hover {
+            background-color: #7f8c8d;
+        }
+        #exportList {
+            background-color: #2ecc71;
+            color: white;
+        }
+        #exportList:hover {
+            background-color: #27ae60;
+        }
+        .category-filter {
+            margin-bottom: 20px;
+        }
+        .category-filter label {
+            margin-right: 10px;
+        }
+        .category-filter select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Travel Stuff List Maker</h1>
+
+        <div class="input-group">
+            <input type="text" id="newItem" placeholder="Add a new travel item...">
+            <button id="addItem">Add Item</button>
+        </div>
+
+        <div class="category-filter">
+            <label for="categoryFilter">Filter by category:</label>
+            <select id="categoryFilter">
+                <option value="all">All Categories</option>
+                <option value="clothing">Clothing</option>
+                <option value="toiletries">Toiletries</option>
+                <option value="electronics">Electronics</option>
+                <option value="documents">Documents</option>
+                <option value="misc">Miscellaneous</option>
+            </select>
+        </div>
+
+        <ul id="itemList"></ul>
+
+        <div class="controls">
+            <button id="clearAll">Clear All Items</button>
+            <button id="exportList">Export List</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const newItemInput = document.getElementById('newItem');
+            const addItemButton = document.getElementById('addItem');
+            const itemList = document.getElementById('itemList');
+            const clearAllButton = document.getElementById('clearAll');
+            const exportListButton = document.getElementById('exportList');
+            const categoryFilter = document.getElementById('categoryFilter');
+
+            // Load items from localStorage
+            loadItems();
+
+            // Add item when button is clicked
+            addItemButton.addEventListener('click', addItem);
+            newItemInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addItem();
+                }
+            });
+
+            // Clear all items
+            clearAllButton.addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all items?')) {
+                    localStorage.removeItem('travelItems');
+                    itemList.innerHTML = '';
+                }
+            });
+
+            // Export list
+            exportListButton.addEventListener('click', exportList);
+
+            // Filter items
+            categoryFilter.addEventListener('change', filterItems);
+
+            function addItem() {
+                const itemText = newItemInput.value.trim();
+                if (itemText === '') return;
+
+                const items = getItems();
+                const newItem = {
+                    id: Date.now(),
+                    text: itemText,
+                    category: 'misc',
+                    completed: false
+                };
+
+                // Simple category detection (could be improved)
+                if (itemText.toLowerCase().includes('shirt') || itemText.toLowerCase().includes('pants') ||
+                    itemText.toLowerCase().includes('socks') || itemText.toLowerCase().includes('underwear')) {
+                    newItem.category = 'clothing';
+                } else if (itemText.toLowerCase().includes('toothbrush') || itemText.toLowerCase().includes('shampoo') ||
+                           itemText.toLowerCase().includes('soap') || itemText.toLowerCase().includes('razor')) {
+                    newItem.category = 'toiletries';
+                } else if (itemText.toLowerCase().includes('phone') || itemText.toLowerCase().includes('laptop') ||
+                           itemText.toLowerCase().includes('charger') || itemText.toLowerCase().includes('camera')) {
+                    newItem.category = 'electronics';
+                } else if (itemText.toLowerCase().includes('passport') || itemText.toLowerCase().includes('ticket') ||
+                           itemText.toLowerCase().includes('license') || itemText.toLowerCase().includes('visa')) {
+                    newItem.category = 'documents';
+                }
+
+                items.push(newItem);
+                saveItems(items);
+                renderItems(items);
+                newItemInput.value = '';
+                newItemInput.focus();
+            }
+
+            function getItems() {
+                const items = localStorage.getItem('travelItems');
+                return items ? JSON.parse(items) : [];
+            }
+
+            function saveItems(items) {
+                localStorage.setItem('travelItems', JSON.stringify(items));
+            }
+
+            function loadItems() {
+                const items = getItems();
+                renderItems(items);
+            }
+
+            function renderItems(items) {
+                itemList.innerHTML = '';
+
+                // Filter items based on category
+                const filterValue = categoryFilter.value;
+                const filteredItems = filterValue === 'all'
+                    ? items
+                    : items.filter(item => item.category === filterValue);
+
+                filteredItems.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'list-item';
+                    li.dataset.id = item.id;
+
+                    li.innerHTML = `
+                        <span class="item-text">${item.text}</span>
+                        <button class="delete-btn" data-id="${item.id}">×</button>
+                    `;
+
+                    itemList.appendChild(li);
+                });
+
+                // Add event listeners to delete buttons
+                document.querySelectorAll('.delete-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = parseInt(this.dataset.id);
+                        deleteItem(id);
+                    });
+                });
+            }
+
+            function deleteItem(id) {
+                const items = getItems();
+                const updatedItems = items.filter(item => item.id !== id);
+                saveItems(updatedItems);
+                renderItems(updatedItems);
+            }
+
+            function clearAllItems() {
+                localStorage.removeItem('travelItems');
+                itemList.innerHTML = '';
+            }
+
+            function exportList() {
+                const items = getItems();
+                if (items.length === 0) {
+                    alert('Your list is empty!');
+                    return;
+                }
+
+                const listText = items.map(item => `- ${item.text}`).join('\n');
+                const blob = new Blob([listText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'travel-list.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            function filterItems() {
+                const items = getItems();
+                renderItems(items);
+            }
+        });
+    </script>
+</body>
+</html>
