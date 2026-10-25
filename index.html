@@ -116,6 +116,12 @@
             border-radius: 4px;
             border: 1px solid #ddd;
         }
+        .footer-text {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 25px;
+        }
     </style>
 </head>
 <body>
@@ -145,6 +151,8 @@
             <button id="clearAll">Clear All Items</button>
             <button id="exportList">Export List</button>
         </div>
+
+        <div class="footer-text">Built By LumeAI</div>
     </div>
 
     <script>
@@ -193,7 +201,7 @@
                     completed: false
                 };
 
-                // Simple category detection (could be improved)
+                // Simple category detection
                 if (itemText.toLowerCase().includes('shirt') || itemText.toLowerCase().includes('pants') ||
                     itemText.toLowerCase().includes('socks') || itemText.toLowerCase().includes('underwear')) {
                     newItem.category = 'clothing';
@@ -232,7 +240,6 @@
             function renderItems(items) {
                 itemList.innerHTML = '';
 
-                // Filter items based on category
                 const filterValue = categoryFilter.value;
                 const filteredItems = filterValue === 'all'
                     ? items
@@ -251,7 +258,6 @@
                     itemList.appendChild(li);
                 });
 
-                // Add event listeners to delete buttons
                 document.querySelectorAll('.delete-btn').forEach(button => {
                     button.addEventListener('click', function() {
                         const id = parseInt(this.dataset.id);
